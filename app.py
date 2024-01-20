@@ -1,3 +1,32 @@
+from flask import Flask, render_template
+from utils import Database
+
+
+def create_app():
+    app = Flask(__name__)
+
+    with app.app_context():
+        db_instance = Database('app_interactions')
+        db_instance.spawnAll()
+
+    @app.route('/', methods=['GET', 'POST'])
+    def initialize():
+        return render_template('login.html')
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def startSession():
+        db_instance.startSession()
+        return render_template('home.html')
+
+    return app
+
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)
+
+
+'''
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 from utils import Database
@@ -5,12 +34,22 @@ import mysql.connector
 import random
 import string
 
-app = Flask(__name__)
+
+def create_app():
+    app = Flask(__name__)
+    with app.app_context():
+        db_instance = Database('app_interactions')
+        db_instance.spawnAll()
+    return app
+
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def initialize():
-    Database.spawnAll()  # Create some dummy data
     return render_template('login.html')
 
 
@@ -20,7 +59,4 @@ def startSession():
 
     return render_template('home.html')
 
-
-if __name__ == '__main__':
-    Database = Database('app_interacions')
-    app.run(debug=True)
+'''

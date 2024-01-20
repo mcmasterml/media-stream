@@ -1,4 +1,6 @@
 import mysql.connector
+import random
+import string
 
 # Database Configuration
 db = mysql.connector.connect(
@@ -113,13 +115,20 @@ def populate_dummy_data(tables_with_columns):
 
 # Database as a Python object
 class Database():
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Database, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, database_name):
         tablesWithColumns = {}
         tablesList = getTables(database_name)
         for table in tablesList:
             columnsWithTypes = getColumnsWithTypes(table)
             tablesWithColumns[table] = columnsWithTypes
-        self.tableSchema = tablesWithColumns
+        self.tableSchema = tablesWithColumns  # type: dict
 
     def spawnAll(self):
         ''' 
@@ -127,7 +136,10 @@ class Database():
         based on the proper datatype
         ignores 'int' to avoid ID columns
         '''
-        populate_dummy_data(self.tableSchema)
+        try:
+            populate_dummy_data(self.tableSchema)
+        except Exception as e:
+            print(e)
 
     def spawnAdvertisement(self):
         ''' 
