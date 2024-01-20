@@ -8,7 +8,7 @@ import string
 db = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
-    password="dilly",
+    password="-------",
     database="app_interactions"
 )
 
@@ -143,5 +143,5 @@ def populate_dummy_data(tables_with_columns):
                     cursor.close()
 
 
-# Example usage
+# usage
 populate_dummy_data(tablesWithColumns)
