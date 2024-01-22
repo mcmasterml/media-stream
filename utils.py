@@ -168,8 +168,7 @@ class Database():
             print(e)
 
     def browse(self):
-        # TODO:
-        print('helloOoooooooo')
+        # TODO: anything
         return
 
     def spawnAdvertisement(self):
@@ -199,7 +198,6 @@ class Database():
                         return str(e)
                     finally:
                         cursor.close()
-        print('AdSpawned')
         return
 
     def watchAdvertisement(self):
