@@ -15,7 +15,7 @@ def create_app():
 
     @app.route('/login', methods=['POST'])
     def startSession():
-        db_instance.startSession()
+        db_instance.startSession()  # TODO: fix
         return render_template('home.html')
 
     @app.route('/browse', methods=['POST'])
@@ -27,7 +27,7 @@ def create_app():
     @app.route('/watch-show', methods=['POST'])
     def watchShow():
         db_instance.spawnShow()
-        db_instance.watchShow()
+        db_instance.watchShow()  # TODO: implement
         return render_template('home.html')
 
     @app.route('/watch-ad', methods=['POST'])
