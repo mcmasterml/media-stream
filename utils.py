@@ -7,7 +7,7 @@ db = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
     password="dilly",
-    database="app_interactions")
+    database="app_interactions")  # TODO: migrate this to the Database object
 
 
 # Helper functions
@@ -113,7 +113,7 @@ def populate_dummy_data(tables_with_columns):
                     cursor.close()
 
 
-# Database as a Python object
+# Database
 class Database():
     _instance = None
 
@@ -128,56 +128,229 @@ class Database():
         for table in tablesList:
             columnsWithTypes = getColumnsWithTypes(table)
             tablesWithColumns[table] = columnsWithTypes
+        self.databaseName = database_name
         self.tableSchema = tablesWithColumns  # type: dict
+        self.connector = mysql.connector.connect(
+            host="127.0.0.1",
+            user="root",
+            password="dilly",
+            database="app_interactions")
 
     def spawnAll(self):
         ''' 
-        Initializes some dummy data for all tables in the DB
+        Initializes some dummy data for all tables 
         based on the proper datatype
-        ignores 'int' to avoid ID columns
+        its naiive -- NULLs for ENUM, INT, and DATETIME (see generate_dummy_data)
         '''
+        for table, columns in self.tableSchema.items():
+            for tup in columns:
+                for _ in range(1):  # Number of dummy records per table
+                    column_names = ", ".join([col[0] for col in columns])
+                    placeholders = ", ".join(["%s"] * len(columns))
+                    data = [generate_dummy_data(col[1]) for col in columns]
+                    cursor = db.cursor()
+                    try:
+                        query = f"""
+                            INSERT INTO {table} ({column_names})
+                            VALUES ({placeholders})
+                        """
+                        cursor.execute(query, tuple(data))
+                        db.commit()
+                    except Exception as e:
+                        print(e)
+                        return str(e)
+                    finally:
+                        cursor.close()
+
         try:
             populate_dummy_data(self.tableSchema)
         except Exception as e:
             print(e)
 
+    def browse(self):
+        # TODO:
+        print('helloOoooooooo')
+        return
+
     def spawnAdvertisement(self):
         ''' 
         Initializes some dummy data for the folowing tables:
-        advertisers, advertisements, session_ads
+        advertisers, advertisements
         '''
-        # TODO: spawn data for the advertisements section when user watches an ad
+        tables = ['advertisers', 'advertisements']
+        cursor = db.cursor()
+        for table, columns in self.tableSchema.items():
+            # Check if the table is in the list of selected tables
+            if table in tables:
+                for _ in range(1):  # Number of dummy records per table
+                    column_names = ", ".join([col[0] for col in columns])
+                    placeholders = ", ".join(["%s"] * len(columns))
+                    data = [generate_dummy_data(col[1]) for col in columns]
+                    cursor = db.cursor()
+                    try:
+                        query = f"""
+                            INSERT INTO {table} ({column_names})
+                            VALUES ({placeholders})
+                        """
+                        cursor.execute(query, tuple(data))
+                        db.commit()
+                    except Exception as e:
+                        print(e)
+                        return str(e)
+                    finally:
+                        cursor.close()
+        print('AdSpawned')
+        return
 
     def watchAdvertisement(self):
         '''
-        Captures data on user watching an ad
+        populates data into session_advertisements
+        using most recent session (by SessionID)
+        and a random advertisement
         '''
-        # TODO:
+        cursor = db.cursor()
+        try:
+            # get all AdID's and pick one at random
+            query = '''
+                SELECT AdID FROM advertisements
+                ORDER BY AdID DESC;
+            '''
+            cursor.execute(query)
+            result = cursor.fetchall()
+            if result:
+                chosenAd = result[random.randint(0, len(result) - 1)]  # tuple
+                AdID = chosenAd[0]
+            else:
+                raise Exception("No advertisements found")
 
-    def spawnStream(self):
+            # get most recent session
+            # TODO: get active session associated with customer
+            query = '''
+                SELECT SessionID FROM sessions
+                ORDER BY SessionID
+                DESC LIMIT 1;
+            '''
+            cursor.execute(query)
+            result = cursor.fetchall()
+            SessionID = result[0][0]
+
+            query = f'''
+                INSERT INTO session_advertisements (SessionID, AdID)
+                VALUES (%s, %s)
+            '''
+            cursor.execute(query, (SessionID, AdID))
+            db.commit()
+
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+        return
+
+    def spawnShow(self):
         ''' 
         Initializes some dummy data for the following tables:
-        shows, genres, directors, session_shows
+        shows, genres, directors
         '''
-        # TODO: spawn data for shows section when user watches a stream
+        tables = ['shows', 'genres', 'directors']
+        cursor = db.cursor()
+        for table, columns in self.tableSchema.items():
+            # Check if the table is in the list of selected tables
+            if table in tables:
+                for _ in range(1):  # Number of dummy records per table
+                    column_names = ", ".join([col[0] for col in columns])
+                    placeholders = ", ".join(["%s"] * len(columns))
+                    data = [generate_dummy_data(col[1]) for col in columns]
+                    cursor = db.cursor()
+                    try:
+                        query = f"""
+                            INSERT INTO {table} ({column_names})
+                            VALUES ({placeholders})
+                        """
+                        cursor.execute(query, tuple(data))
+                        db.commit()
+                    except Exception as e:
+                        print(e)
+                        return str(e)
+                    finally:
+                        cursor.close()
+        return
 
-    def watchStream(self):
+    def watchShow(self):
         '''
         Captures data on user watching an ad
         '''
-        # TODO:
+        # TODO: populate session_shows similarly to watchAdvertisement()
+        return
 
     def startSession(self):
         '''
         Models the beginning of a session for user
         populates portion of `sessions` table
         '''
-        # TODO: insert into sessions (relevant data)
-        pass
+        cursor = db.cursor()
+        try:
+            # get most recent session
+            query = '''
+                SELECT SessionID FROM sessions
+                ORDER BY SessionID
+                DESC LIMIT 1;
+            '''
+            cursor.execute(query)
+            result = cursor.fetchall()
+            if result:
+                activeSessionID = result[0][0]
+            else:
+                raise Exception('no session found')
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            # Update the session start time
+            query = '''
+                UPDATE sessions
+                SET SessionStartTime = %s
+                WHERE SessionID = %s;
+            '''
+            cursor.execute(query, (now, activeSessionID))
+            db.commit()
+
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+        return
 
     def endSession(self):
         '''
         Models the end of a session for user
         populates portion of `sessions` table
         '''
-        # TODO:
+        cursor = db.cursor()
+        try:
+            # get most recent session
+            query = '''
+                SELECT SessionID FROM sessions
+                ORDER BY SessionID
+                DESC LIMIT 1;
+            '''
+            cursor.execute(query)
+            result = cursor.fetchall()
+            if result:
+                activeSessionID = result[0][0]
+            else:
+                raise Exception('no session found')
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            # Update the session end time
+            query = '''
+                UPDATE sessions
+                SET SessionEndTime = %s
+                WHERE SessionID = %s;
+            '''
+            cursor.execute(query, (now, activeSessionID))
+            db.commit()
+
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close
+        return
