@@ -4,8 +4,6 @@ A MySQL Database modeling an ad-driven streaming platform
 with a skeleton of a Flask Application
 which simulates app usage with some silly buttons
 
-![](static/loginView.png)
-
 ![](static/homeView.png)
 
 ### Database Model
