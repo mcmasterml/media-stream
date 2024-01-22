@@ -9,14 +9,37 @@ def create_app():
         db_instance = Database('app_interactions')
         db_instance.spawnAll()
 
-    @app.route('/', methods=['GET', 'POST'])
-    def initialize():
+    @app.route('/', methods=['GET'])
+    def renderLoginPage():
         return render_template('login.html')
 
-    @app.route('/login', methods=['GET', 'POST'])
+    @app.route('/login', methods=['POST'])
     def startSession():
         db_instance.startSession()
         return render_template('home.html')
+
+    @app.route('/browse', methods=['POST'])
+    def browse():
+        db_instance.browse()
+        # TODO: anything. currently doing nothing.
+        return render_template('home.html')
+
+    @app.route('/watch-show', methods=['POST'])
+    def watchShow():
+        db_instance.spawnShow()
+        db_instance.watchShow()
+        return render_template('home.html')
+
+    @app.route('/watch-ad', methods=['POST'])
+    def watchAd():
+        db_instance.spawnAdvertisement()
+        db_instance.watchAdvertisement()
+        return render_template('home.html')
+
+    @app.route('/logout', methods=['POST'])
+    def logout():
+        db_instance.endSession()
+        return render_template('login.html')
 
     return app
 
